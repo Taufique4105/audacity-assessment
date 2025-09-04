@@ -1,143 +1,81 @@
-describe('E-Commerce Site TestSuit',() => {
-    beforeEach(() => {
-        cy.visit('https://practice.qabrains.com/');
-        cy.get('div.flex.items-center > button').click();
-        cy.contains('E-Commerce Site').click();
-        cy.get('#page-sidebar button.lg\\:hidden').click();
-        cy.contains('a', 'Visit Demo Site').click();
+import EcommercePage from '../support/pageObjects/EcommercePage';
 
-        cy.get('#email').type('practice@qabrains.com');
-        cy.get('#password').type('Password123');
-        cy.get('button').contains('Login').click();
-        
+describe('E-Commerce Site TestSuit', () => {
+    beforeEach(() => {
+        EcommercePage.visit();
+        EcommercePage.login('practice@qabrains.com', 'Password123');
     });
+
     it('verifies items can be added to cart', () => {
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // find the card containing this product name
-            .within(() => {
-                cy.contains('button', 'Add to cart').click();
-            });
+        EcommercePage.addToCart('Sample Shoe Name');
         cy.get('li[data-sonner-toast]')
             .should('be.visible')
             .and('contain.text', 'Added to cart');
     });
+
     it('verifies items can be removed from cart', () => {
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // first add an item to cart
-            .within(() => {
-                cy.contains('button', 'Add to cart').click();
-            });
-        cy.wait(2000) // to visualize added item
-        cy.contains('button', 'Remove from cart').click();  
+        EcommercePage.addToCart('Sample Shoe Name');
+        cy.wait(2000);
+        EcommercePage.removeFromCart('Sample Shoe Name');
         cy.get('li[data-sonner-toast]')
             .should('be.visible')
             .and('contain.text', 'Removed from cart');
     });
 
-    it('verifies item count can be updated in cart', () =>{
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // first add an item to cart
-            .within(() => {
-                cy.contains('button', 'Add to cart').click();
-            });
-        cy.scrollTo('top');
-        cy.get('span[role="button"]')
-            .contains('1')
-            .click();
-        cy.get('button')
-            .contains('+')
-            .click()    // add 1 more item
-        cy.get('span.border').should('have.text', '2'); // item increased
-
-        cy.get('button')
-            .contains('-')
-            .click()    // remove 1 item
+    it('verifies item count can be updated in cart', () => {
+        EcommercePage.addToCart('Sample Shoe Name');
+        EcommercePage.updateCartCount('1');
+        EcommercePage.incrementCart();
+        cy.get('span.border').should('have.text', '2');
+        EcommercePage.decrementCart();
         cy.get('span.border').should('have.text', '1');
-
     });
 
-    it('verifies favorite list functionality', () =>{
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // first add an item to wishlist
-            .within(() => {
-                cy.get('.w-5.h-5').click(); // click on heart icon
-            });
+    it('verifies favorite list functionality', () => {
+        EcommercePage.addToFavorites('Sample Shoe Name');
         cy.get('li[data-sonner-toast]')
             .should('be.visible')
             .and('contain.text', 'Added to favorites');
-        // verify favorite persistence after page reload
         cy.reload();
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // choose the same item again 
-            .within(() => {
-                cy.get('button.cursor-pointer svg')
-            .should('have.css', 'color', 'rgb(255, 0, 0)'); // heart icon should be red
-            });
-        // remove from favorites
-        cy.contains('.flex.flex-col', 'Sample Shoe Name')
-            .within(() => {
-                cy.get('.w-5.h-5').click(); // click on heart icon
-            });
+        EcommercePage.verifyFavoriteRed('Sample Shoe Name');
+        EcommercePage.addToFavorites('Sample Shoe Name');
         cy.get('li[data-sonner-toast]')
             .should('be.visible')
             .and('contain.text', 'Removed from favorites');
     });
 
-    it('validates product sorting', () =>{
-        // Open the sort dropdown
-        cy.get('button[data-slot="popover-trigger"]').click()
+    it('validates product sorting', () => {
+        EcommercePage.openSortDropdown();
+        EcommercePage.selectSortOption('Low to High (Price)');
+        cy.wait(500);
+        EcommercePage.getProductPrices().then(($prices) => {
+            const priceValues = $prices
+                .map((i, el) => parseFloat(el.innerText.replace('$', '').replace(',', '')))
+                .get();
+            const sortedAsc = [...priceValues].sort((a, b) => a - b);
+            expect(priceValues).to.deep.eq(sortedAsc);
+        });
 
-        cy.contains('Low to High (Price)').click()
+        EcommercePage.openSortDropdown();
+        EcommercePage.selectSortOption('High to Low (Price)');
+        cy.wait(500);
+        EcommercePage.getProductPrices().then(($prices) => {
+            const priceValues = $prices
+                .map((i, el) => parseFloat(el.innerText.replace('$', '').replace(',', '')))
+                .get();
+            const sortedDesc = [...priceValues].sort((a, b) => b - a);
+            expect(priceValues).to.deep.eq(sortedDesc);
+        });
+    });
 
-        // Wait for products to render
-        cy.wait(500) 
-
-        // Grab all prices
-        cy.get('.products .text-lg.font-bold')
-            .then(($prices) => {
-                const priceValues = $prices
-                    .map((i, el) => parseFloat(el.innerText.replace('$', '').replace(',', '')))
-                    .get()
-
-                // Assert ascending order
-                const sortedAsc = [...priceValues].sort((a, b) => a - b)
-                expect(priceValues).to.deep.eq(sortedAsc)
-            })
-
-        // // For High to Low
-        cy.get('button[data-slot="popover-trigger"]').click()
-        cy.contains('High to Low (Price)').click()
-        cy.wait(500)
-
-        cy.get('.products .text-lg.font-bold')
-            .then(($prices) => {
-                const priceValues = $prices
-                    .map((i, el) => parseFloat(el.innerText.replace('$', '').replace(',', '')))
-                    .get()
-
-                const sortedDesc = [...priceValues].sort((a, b) => b - a)
-                expect(priceValues).to.deep.eq(sortedDesc)
-            })
-
-    })
-
-    it.only('verifies checkout functionality', () =>{
-        cy.contains('.flex.flex-col', 'Sample Shoe Name') // first add an item to cart
-            .within(() => {
-                cy.contains('button', 'Add to cart').click();
-            });
-        cy.scrollTo('top');
-        cy.get('span[role="button"]')
-            .contains('1')
-            .click();
-        cy.contains('Checkout').click();
-        cy.get('input[placeholder="Ex. John"]').type('Dan');
-        cy.get('input[placeholder="Ex. Doe"]').type('Humfrey');
-        cy.contains('Continue').click();
+    it('verifies checkout functionality', () => {
+        EcommercePage.addToCart('Sample Shoe Name');
+        EcommercePage.updateCartCount('1');
+        EcommercePage.checkout('Dan', 'Humfrey');
         cy.contains('Payment Information:').should('be.visible');
         cy.contains('Shipping Information:').should('be.visible');
         cy.contains('Price Total:').should('be.visible');
-
-        cy.contains('Finish').click();
-        cy.contains('Thank you for your order!').should('be.visible')
-
-
-
-    })
-
+        EcommercePage.finishCheckout();
+        cy.contains('Thank you for your order!').should('be.visible');
+    });
 });
