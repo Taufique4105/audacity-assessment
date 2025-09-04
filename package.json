@@ -1,0 +1,24 @@
+{
+  "name": "audacity-assessment",
+  "version": "1.0.0",
+  "description": "This project will cover the test automation tasks provided by Audacity IT Solutions; where I'll be using cypress with node and other standards.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Taufique4105/audacity-assessment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Taufique4105/audacity-assessment/issues"
+  },
+  "homepage": "https://github.com/Taufique4105/audacity-assessment#readme",
+  "devDependencies": {
+    "cypress": "^14.5.4"
+  }
+}
