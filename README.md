@@ -1,5 +1,4 @@
-# audacity-assessment
-This project will cover the test automation tasks provided by Audacity IT Solutions; where I'll be using cypress with node and other standards.
+This project will cover the test automation tasks on QA Brains Practice site; where I'll be using cypress with node and other standards.
 
 Dependencies : 
 install node.js, npm, cypress
